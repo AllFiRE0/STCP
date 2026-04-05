@@ -1,0 +1,56 @@
+# ============================================
+# SessionTrackerCP - config
+# Author: AllF1RE
+# Thx for usage
+# ============================================
+
+config-version: 2
+
+# Session settings
+session:
+  timeout-seconds: 1800
+
+# Cheks settings
+checks:
+  radius: 60
+  time-window-seconds: 10800
+
+# Violation Commands
+violation-commands:
+  enabled: false
+  cooldown-seconds: 120
+  commands:
+    - "asConsole! broadcast &c[!] &6{player} &7попытался загриферить &c{victim}"
+    - "asConsole! log {player} attempted grief on {victim} at {x},{y},{z}"
+    - "asConsole! lp user {player} parent add temp.greifer"
+    - "asPlayer! msg {player} &cУ тебя {warns} предупреждений!"
+    - "asPlayer! title {player} title &cНарушение!"
+    - "asPlayer! msg {victim} &aИгрок {player} пытался сломать твой блок!"
+
+# Staff notification settings
+staff-notifications:
+  default-enabled: false
+  permission: "sessiontracker.staff"
+  format:
+    - "&m----------------------------------------"
+    - "&c[!] &6Обнаружено нарушение!"
+    - "&eНарушитель: &f{player}"
+    - "&eЖертва: &f{victim}"
+    - "&eТип: &f{cause}"
+    - "&eКоординаты: &f{x}, {y}, {z}"
+    - "&m----------------------------------------"
+
+# Soft check for similar names
+soft-check:
+  enabled: true
+  similarity-threshold: 0.75
+  reduce-radius: true
+  new-radius: 20
+  extend-time-window: true
+  new-time-window-seconds: 21600
+
+# Logging xD
+logging:
+  enabled: true
+  log-file: "violations"
+  format: "! {player} {cause} {uuid} {ip} {x},{y},{z} {reason}"
