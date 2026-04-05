@@ -1,0 +1,51 @@
+meta:
+  language: "Русский"
+  locale: "ru_RU"
+
+# Консольные сообщения
+console:
+  plugin_enabled: "SessionTrackerCP успешно загружен!"
+  plugin_disabled: "SessionTrackerCP выгружен!"
+  config_loaded: "Конфигурация загружена (версия: {version})"
+  config_updated: "Конфигурация обновлена с версии {old} до {new}"
+  lang_loaded: "Языковой файл загружен: {language}"
+  placeholderapi_hooked: "PlaceholderAPI подключён!"
+  violation_detected: "Нарушение: {player} -> {victim} ({cause})"
+
+# Команды
+commands:
+  no_permission: "&cУ вас нет прав!"
+  player_not_found: "&cИгрок не найден!"
+  reloaded: "&aПлагин перезагружен!"
+  invalid_number: "&cЧисло должно быть от 1 до 100!"
+  
+  notifications:
+    toggled: "&6Уведомления: {status}"
+    enabled: "&aвключены"
+    disabled: "&cвыключены"
+  
+  view:
+    title: "&6=== Нарушения игрока {player} ==="
+    empty: "&7У игрока нет нарушений"
+    entry: " &8• &c{time} &7| &f{cause} &7| Жертва: &f{victim}"
+  
+  warn:
+    added: "&aДобавлено {amount} предупреждение(ий) игроку {player} (Всего: {total})"
+    removed: "&cСнято {amount} предупреждение(ий) у игрока {player} (Осталось: {total})"
+    current: "&eУ игрока {player} &f{total} &eпредупреждений"
+  
+  info:
+    title: "&6=== Информация об игроке {player} ==="
+    uuid: "&eUUID: &f{uuid}"
+    warns: "&eПредупреждений: &f{warns}"
+    violations: "&eНарушений: &f{violations}"
+
+# Уведомления
+notifications:
+  header: "&m----------------------------------------"
+  footer: "&m----------------------------------------"
+  title: "&c[!] &6Обнаружено нарушение!"
+  player: "&eНарушитель: &f{player}"
+  victim: "&eЖертва: &f{victim}"
+  cause: "&eТип: &f{cause}"
+  coordinates: "&eКоординаты: &f{x}, {y}, {z}"
