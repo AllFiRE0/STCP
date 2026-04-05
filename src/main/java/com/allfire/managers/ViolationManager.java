@@ -16,6 +16,7 @@ public class ViolationManager {
     private final SessionTracker plugin;
     private final Map<UUID, List<Violation>> violations;
     private final Map<UUID, Long> lastCommandExecution;
+    private final Map<UUID, Long> lastMaxWarnsExecution;  // <-- НОВОЕ ПОЛЕ
     private final Map<UUID, Boolean> staffNotificationsEnabled;
     private final SimpleDateFormat dateFormat;
     
@@ -23,6 +24,7 @@ public class ViolationManager {
         this.plugin = plugin;
         this.violations = new ConcurrentHashMap<>();
         this.lastCommandExecution = new ConcurrentHashMap<>();
+        this.lastMaxWarnsExecution = new ConcurrentHashMap<>();  // <-- ИНИЦИАЛИЗАЦИЯ
         this.staffNotificationsEnabled = new ConcurrentHashMap<>();
         this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     }
@@ -93,6 +95,51 @@ public class ViolationManager {
             }
         }
     }
+    
+    // ========== НОВЫЙ МЕТОД ДЛЯ КОМАНД ПРИ ДОСТИЖЕНИИ МАКСИМУМА ПРЕДУПРЕЖДЕНИЙ ==========
+    
+    public void executeMaxWarnsCommands(Player player, int warns, int maxWarns) {
+        if (!plugin.getConfigManager().isMaxWarnsCommandsEnabled()) {
+            return;
+        }
+        
+        long now = System.currentTimeMillis();
+        Long lastExec = lastMaxWarnsExecution.get(player.getUniqueId());
+        if (lastExec != null && (now - lastExec) < plugin.getConfigManager().getMaxWarnsCommandCooldown() * 1000L) {
+            return;
+        }
+        
+        lastMaxWarnsExecution.put(player.getUniqueId(), now);
+        
+        List<String> commands = plugin.getConfigManager().getMaxWarnsCommands();
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("player", player.getName());
+        placeholders.put("warns", String.valueOf(warns));
+        placeholders.put("maxwarns", String.valueOf(maxWarns));
+        placeholders.put("uuid", player.getUniqueId().toString());
+        if (player.getAddress() != null) {
+            placeholders.put("ip", player.getAddress().getAddress().getHostAddress());
+        } else {
+            placeholders.put("ip", "unknown");
+        }
+        
+        for (String command : commands) {
+            String processed = command;
+            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                processed = processed.replace("{" + entry.getKey() + "}", entry.getValue());
+            }
+            
+            if (processed.startsWith("asConsole!")) {
+                String cmd = processed.substring("asConsole!".length()).trim();
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
+            } else if (processed.startsWith("asPlayer!")) {
+                String cmd = processed.substring("asPlayer!".length()).trim();
+                player.performCommand(cmd);
+            }
+        }
+    }
+    
+    // ========== ОСТАЛЬНЫЕ МЕТОДЫ БЕЗ ИЗМЕНЕНИЙ ==========
     
     private void notifyStaff(Violation violation) {
         List<String> format = plugin.getConfigManager().getStaffNotificationFormat();
