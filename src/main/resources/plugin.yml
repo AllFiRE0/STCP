@@ -1,0 +1,34 @@
+name: SessionTrackerCP
+version: 1.0.0
+main: com.allfire.sessiontracker.SessionTracker
+api-version: 1.13
+author: AllF1RE
+description: Advanced session tracking and grief prevention system
+
+softdepend:
+  - PlaceholderAPI
+
+commands:
+  stcp:
+    description: Main plugin command
+    aliases: [sessiontracker, st]
+
+permissions:
+  sessiontracker.*:
+    default: op
+    children:
+      sessiontracker.user: true
+      sessiontracker.staff: true
+      sessiontracker.admin: true
+  
+  sessiontracker.user:
+    default: true
+    description: Default perms
+  
+  sessiontracker.staff:
+    default: op
+    description: Perm for notifying
+  
+  sessiontracker.admin:
+    default: op
+    description: Admin perms
