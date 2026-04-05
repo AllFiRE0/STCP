@@ -3,6 +3,7 @@ package com.allfire.sessiontracker.managers;
 import com.allfire.sessiontracker.SessionTracker;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +27,6 @@ public class WarnManager {
     private void loadWarns() {
         warnsFile = new File(plugin.getDataFolder(), "warns.yml");
         
-        // Создаём файл, если его нет
         if (!warnsFile.exists()) {
             try {
                 plugin.getDataFolder().mkdirs();
@@ -59,10 +59,30 @@ public class WarnManager {
         }
     }
     
-    public void addWarn(UUID uuid, int amount) {
+    public int getMaxWarns(Player player) {
+        String permission = plugin.getConfigManager().getMaxWarnsPermission();
+        int maxWarns = plugin.getConfigManager().getDefaultMaxWarns();
+        
+        for (int i = 100; i >= 1; i--) {
+            if (player.hasPermission(permission + i)) {
+                return i;
+            }
+        }
+        return maxWarns;
+    }
+    
+    public void addWarn(Player player, int amount) {
+        UUID uuid = player.getUniqueId();
         int current = warns.getOrDefault(uuid, 0);
-        warns.put(uuid, Math.min(current + amount, 100));
+        int newAmount = Math.min(current + amount, 100);
+        warns.put(uuid, newAmount);
         saveWarns();
+        
+        // Проверка на достижение лимита
+        int maxWarns = getMaxWarns(player);
+        if (newAmount >= maxWarns) {
+            plugin.getViolationManager().executeMaxWarnsCommands(player, newAmount, maxWarns);
+        }
     }
     
     public void removeWarn(UUID uuid, int amount) {
