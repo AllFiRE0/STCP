@@ -93,4 +93,28 @@ public class ConfigManager {
     public String getLogFormat() {
         return config.getString("logging.format", "! {player} {cause} {uuid} {ip} {x},{y},{z} {reason}");
     }
+
+    public int getDefaultMaxWarns() {
+    return config.getInt("max-warns.default", 10);
+   }
+
+   public String getMaxWarnsPermission() {
+   return config.getString("max-warns.permission", "stcp.maxwarns.");
+   }
+
+   public boolean isMaxWarnsCommandsEnabled() {
+   return config.getBoolean("max-warns-commands.enabled", true);
+   }
+
+   public int getMaxWarnsCommandCooldown() {
+   return config.getInt("max-warns-commands.cooldown-seconds", 300);
+   }
+
+   public List<String> getMaxWarnsCommands() {
+   return config.getStringList("max-warns-commands.commands");
+   }
+
+   public String getBypassPermission() {
+   return config.getString("bypass-permission", "stcp.bypass");
+   }
 }
