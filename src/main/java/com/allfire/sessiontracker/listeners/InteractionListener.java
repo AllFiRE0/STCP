@@ -1,11 +1,8 @@
 package com.allfire.sessiontracker.listeners;
 
 import com.allfire.sessiontracker.SessionTracker;
-import com.allfire.sessiontracker.managers.SessionManager;
-import com.allfire.sessiontracker.managers.ViolationManager;
 import com.allfire.sessiontracker.models.Session;
 import org.bukkit.Location;
-import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -39,11 +36,14 @@ public class InteractionListener implements Listener {
     }
     
     private void handleInteraction(Player player, String eventType, Location location) {
+        // ПРОВЕРКА НА ПРАВО ОБХОДА (ДЛЯ АДМИНОВ)
+        if (player.hasPermission(plugin.getConfigManager().getBypassPermission())) {
+            return; // Админы и модераторы не проверяются
+        }
+        
         plugin.getSessionManager().updateActivity(player);
         plugin.getSessionManager().addInteraction(player, eventType, location);
         
-        // Проверка на нарушение (проверяем другие сессии)
-        Session currentSession = plugin.getSessionManager().getSession(player.getUniqueId());
         int radius = plugin.getConfigManager().getCheckRadius();
         long timeWindow = plugin.getConfigManager().getTimeWindowSeconds() * 1000L;
         
