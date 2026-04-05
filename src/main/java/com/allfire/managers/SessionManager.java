@@ -52,20 +52,4 @@ public class SessionManager {
         long now = System.currentTimeMillis();
         sessions.values().removeIf(session -> now - session.getLastActivity() > timeout);
     }
-}    }
-    
-    public long getPlaytime(UUID uuid) {
-        Session session = sessions.get(uuid);
-        return session != null ? session.getTotalPlayTime() : 0;
-    }
-    
-    public Collection<Session> getSessions() {
-    return sessions.values();
-    }
-    
-    public void cleanupOldSessions() {
-        long timeout = plugin.getConfigManager().getSessionTimeoutSeconds() * 1000L;
-        long now = System.currentTimeMillis();
-        sessions.values().removeIf(session -> now - session.getLastActivity() > timeout);
-    }
 }
