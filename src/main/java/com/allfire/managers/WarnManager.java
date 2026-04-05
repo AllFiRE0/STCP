@@ -1,102 +1,105 @@
-package com.allfire.sessiontracker.managers;
+package com.allfire.sessiontracker.commands;
 
 import com.allfire.sessiontracker.SessionTracker;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class WarnManager {
+public class WarnCommand {
     
     private final SessionTracker plugin;
-    private final Map<UUID, Integer> warns;
-    private File warnsFile;
-    private FileConfiguration warnsConfig;
     
-    public WarnManager(SessionTracker plugin) {
+    public WarnCommand(SessionTracker plugin) {
         this.plugin = plugin;
-        this.warns = new ConcurrentHashMap<>();
-        loadWarns();
     }
     
-    private void loadWarns() {
-        warnsFile = new File(plugin.getDataFolder(), "warns.yml");
-        
-        if (!warnsFile.exists()) {
-            try {
-                plugin.getDataFolder().mkdirs();
-                warnsFile.createNewFile();
-                plugin.getLogger().info("Создан файл warns.yml");
-            } catch (IOException e) {
-                plugin.getLogger().severe("Не удалось создать warns.yml: " + e.getMessage());
-            }
+    public boolean execute(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("sessiontracker.admin")) {
+            sender.sendMessage(plugin.getLanguageManager().getMessage("commands.no_permission"));
+            return true;
         }
         
-        warnsConfig = YamlConfiguration.loadConfiguration(warnsFile);
+        if (args.length < 3) {
+            sender.sendMessage("§c/stcp warn add/remove <1-100> [игрок]");
+            return true;
+        }
         
-        for (String key : warnsConfig.getKeys(false)) {
-            try {
-                warns.put(UUID.fromString(key), warnsConfig.getInt(key));
-            } catch (IllegalArgumentException e) {
-                plugin.getLogger().warning("Неверный UUID в warns.yml: " + key);
-            }
-        }
-    }
-    
-    private void saveWarns() {
-        for (Map.Entry<UUID, Integer> entry : warns.entrySet()) {
-            warnsConfig.set(entry.getKey().toString(), entry.getValue());
-        }
+        String action = args[1].toLowerCase();
+        int amount;
         try {
-            warnsConfig.save(warnsFile);
-        } catch (IOException e) {
-            plugin.getLogger().warning("Ошибка сохранения warns.yml: " + e.getMessage());
-        }
-    }
-    
-    public int getMaxWarns(Player player) {
-        String permission = plugin.getConfigManager().getMaxWarnsPermission();
-        int maxWarns = plugin.getConfigManager().getDefaultMaxWarns();
-        
-        for (int i = 100; i >= 1; i--) {
-            if (player.hasPermission(permission + i)) {
-                return i;
+            amount = Integer.parseInt(args[2]);
+            if (amount < 1 || amount > 100) {
+                sender.sendMessage(plugin.getLanguageManager().getMessage("commands.invalid_number"));
+                return true;
             }
+        } catch (NumberFormatException e) {
+            sender.sendMessage(plugin.getLanguageManager().getMessage("commands.invalid_number"));
+            return true;
         }
-        return maxWarns;
-    }
-    
-    public void addWarn(Player player, int amount) {
-        UUID uuid = player.getUniqueId();
-        int current = warns.getOrDefault(uuid, 0);
-        int newAmount = Math.min(current + amount, 100);
-        warns.put(uuid, newAmount);
-        saveWarns();
         
-        // Проверка на достижение лимита
-        int maxWarns = getMaxWarns(player);
-        if (newAmount >= maxWarns) {
-            plugin.getViolationManager().executeMaxWarnsCommands(player, newAmount, maxWarns);
-        }
-    }
-    
-    public void removeWarn(UUID uuid, int amount) {
-        int current = warns.getOrDefault(uuid, 0);
-        int newAmount = Math.max(current - amount, 0);
-        if (newAmount == 0) {
-            warns.remove(uuid);
+        // Определяем цель для ADD (нужен онлайн игрок)
+        Player targetPlayer = null;
+        OfflinePlayer targetOffline = null;
+        String targetName = null;
+        
+        if (args.length >= 4) {
+            targetPlayer = Bukkit.getPlayer(args[3]);
+            if (targetPlayer == null) {
+                targetOffline = Bukkit.getOfflinePlayer(args[3]);
+                targetName = args[3];
+            } else {
+                targetName = targetPlayer.getName();
+            }
+        } else if (sender instanceof Player) {
+            targetPlayer = (Player) sender;
+            targetName = sender.getName();
         } else {
-            warns.put(uuid, newAmount);
+            sender.sendMessage("Укажите игрока");
+            return true;
         }
-        saveWarns();
-    }
-    
-    public int getWarnCount(UUID uuid) {
-        return warns.getOrDefault(uuid, 0);
+        
+        if (action.equals("add")) {
+            // ADD требует онлайн игрока
+            if (targetPlayer == null) {
+                sender.sendMessage("§cИгрок должен быть онлайн для добавления предупреждений!");
+                return true;
+            }
+            plugin.getWarnManager().addWarn(targetPlayer, amount);
+            int total = plugin.getWarnManager().getWarnCount(targetPlayer.getUniqueId());
+            sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.added",
+                Map.of("amount", String.valueOf(amount), "player", targetName, "total", String.valueOf(total))));
+            
+        } else if (action.equals("remove")) {
+            // REMOVE работает с оффлайн игроками
+            UUID targetUuid;
+            if (targetPlayer != null) {
+                targetUuid = targetPlayer.getUniqueId();
+                targetName = targetPlayer.getName();
+            } else if (targetOffline != null && targetOffline.hasPlayedBefore()) {
+                targetUuid = targetOffline.getUniqueId();
+                if (targetName == null) targetName = targetOffline.getName();
+            } else {
+                sender.sendMessage(plugin.getLanguageManager().getMessage("commands.player_not_found"));
+                return true;
+            }
+            
+            int current = plugin.getWarnManager().getWarnCount(targetUuid);
+            if (current < amount) {
+                sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.not_enough",
+                    Map.of("amount", String.valueOf(amount))));
+                return true;
+            }
+            plugin.getWarnManager().removeWarn(targetUuid, amount);
+            int total = plugin.getWarnManager().getWarnCount(targetUuid);
+            sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.removed",
+                Map.of("amount", String.valueOf(amount), "player", targetName, "total", String.valueOf(total))));
+        } else {
+            sender.sendMessage("§cИспользуйте add или remove");
+        }
+        return true;
     }
 }
