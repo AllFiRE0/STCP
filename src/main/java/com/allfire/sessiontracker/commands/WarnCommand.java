@@ -4,8 +4,10 @@ import com.allfire.sessiontracker.SessionTracker;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import java.util.Map;
+import java.util.UUID;
 
 public class WarnCommand {
     
@@ -39,37 +41,62 @@ public class WarnCommand {
             return true;
         }
         
-        OfflinePlayer target;
+        // Определяем цель
+        Player targetPlayer = null;
+        OfflinePlayer targetOffline = null;
+        String targetName = null;
+        
         if (args.length >= 4) {
-            target = Bukkit.getOfflinePlayer(args[3]);
-        } else if (sender instanceof org.bukkit.entity.Player) {
-            target = (OfflinePlayer) sender;
+            targetPlayer = Bukkit.getPlayer(args[3]);
+            if (targetPlayer == null) {
+                targetOffline = Bukkit.getOfflinePlayer(args[3]);
+                targetName = args[3];
+            } else {
+                targetName = targetPlayer.getName();
+            }
+        } else if (sender instanceof Player) {
+            targetPlayer = (Player) sender;
+            targetName = sender.getName();
         } else {
             sender.sendMessage("Укажите игрока");
             return true;
         }
         
-        if (target == null || !target.hasPlayedBefore()) {
-            sender.sendMessage(plugin.getLanguageManager().getMessage("commands.player_not_found"));
-            return true;
-        }
-        
         if (action.equals("add")) {
-            plugin.getWarnManager().addWarn(target.getUniqueId(), amount);
-            int total = plugin.getWarnManager().getWarnCount(target.getUniqueId());
+            // ADD требует онлайн игрока
+            if (targetPlayer == null) {
+                sender.sendMessage("§cИгрок должен быть онлайн для добавления предупреждений!");
+                return true;
+            }
+            plugin.getWarnManager().addWarn(targetPlayer, amount);
+            int total = plugin.getWarnManager().getWarnCount(targetPlayer.getUniqueId());
             sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.added",
-                Map.of("amount", String.valueOf(amount), "player", target.getName(), "total", String.valueOf(total))));
+                Map.of("amount", String.valueOf(amount), "player", targetName, "total", String.valueOf(total))));
+            
         } else if (action.equals("remove")) {
-            int current = plugin.getWarnManager().getWarnCount(target.getUniqueId());
+            // REMOVE работает с оффлайн игроками
+            UUID targetUuid;
+            if (targetPlayer != null) {
+                targetUuid = targetPlayer.getUniqueId();
+                targetName = targetPlayer.getName();
+            } else if (targetOffline != null && targetOffline.hasPlayedBefore()) {
+                targetUuid = targetOffline.getUniqueId();
+                if (targetName == null) targetName = targetOffline.getName();
+            } else {
+                sender.sendMessage(plugin.getLanguageManager().getMessage("commands.player_not_found"));
+                return true;
+            }
+            
+            int current = plugin.getWarnManager().getWarnCount(targetUuid);
             if (current < amount) {
                 sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.not_enough",
                     Map.of("amount", String.valueOf(amount))));
                 return true;
             }
-            plugin.getWarnManager().removeWarn(target.getUniqueId(), amount);
-            int total = plugin.getWarnManager().getWarnCount(target.getUniqueId());
+            plugin.getWarnManager().removeWarn(targetUuid, amount);
+            int total = plugin.getWarnManager().getWarnCount(targetUuid);
             sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.removed",
-                Map.of("amount", String.valueOf(amount), "player", target.getName(), "total", String.valueOf(total))));
+                Map.of("amount", String.valueOf(amount), "player", targetName, "total", String.valueOf(total))));
         } else {
             sender.sendMessage("§cИспользуйте add или remove");
         }
