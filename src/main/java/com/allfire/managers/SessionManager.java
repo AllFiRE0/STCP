@@ -41,6 +41,10 @@ public class SessionManager {
         return session != null ? session.getTotalPlayTime() : 0;
     }
     
+    public Collection<Session> getSessions() {
+    return sessions.values();
+    }
+    
     public void cleanupOldSessions() {
         long timeout = plugin.getConfigManager().getSessionTimeoutSeconds() * 1000L;
         long now = System.currentTimeMillis();
