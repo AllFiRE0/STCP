@@ -5,6 +5,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,13 +25,26 @@ public class WarnManager {
     
     private void loadWarns() {
         warnsFile = new File(plugin.getDataFolder(), "warns.yml");
+        
+        // Создаём файл, если его нет
         if (!warnsFile.exists()) {
-            plugin.saveResource("warns.yml", false);
+            try {
+                plugin.getDataFolder().mkdirs();
+                warnsFile.createNewFile();
+                plugin.getLogger().info("Создан файл warns.yml");
+            } catch (IOException e) {
+                plugin.getLogger().severe("Не удалось создать warns.yml: " + e.getMessage());
+            }
         }
+        
         warnsConfig = YamlConfiguration.loadConfiguration(warnsFile);
         
         for (String key : warnsConfig.getKeys(false)) {
-            warns.put(UUID.fromString(key), warnsConfig.getInt(key));
+            try {
+                warns.put(UUID.fromString(key), warnsConfig.getInt(key));
+            } catch (IllegalArgumentException e) {
+                plugin.getLogger().warning("Неверный UUID в warns.yml: " + key);
+            }
         }
     }
     
@@ -40,8 +54,8 @@ public class WarnManager {
         }
         try {
             warnsConfig.save(warnsFile);
-        } catch (Exception e) {
-            plugin.getLogger().warning("Ошибка сохранения warns.yml");
+        } catch (IOException e) {
+            plugin.getLogger().warning("Ошибка сохранения warns.yml: " + e.getMessage());
         }
     }
     
