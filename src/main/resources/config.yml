@@ -30,6 +30,23 @@ violation-commands:
     - "asPlayer! title {player} title &cНарушение!"
     - "asPlayer! msg {victim} &aИгрок {player} пытался сломать твой блок!"
 
+# Максимальное количество предупреждений
+max-warns:
+  default: 10
+  permission: "stcp.maxwarns."
+
+# Команды при достижении максимальных предупреждений
+max-warns-commands:
+  enabled: true
+  cooldown-seconds: 300
+  commands:
+    - "asConsole! broadcast &c[!] &6{player} &7достиг &c{maxwarns} &7предупреждений и был наказан!"
+    - "asConsole! tempban {player} 1h Превышение лимита предупреждений"
+    - "asPlayer! msg {player} &cТы получил бан на 1 час за {maxwarns} предупреждений!"
+
+# Право обхода проверок
+bypass-permission: "stcp.bypass"
+
 # Staff notification settings
 staff-notifications:
   default-enabled: false
