@@ -7,7 +7,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.List;
 
 public class ConfigManager {
     
@@ -30,6 +30,14 @@ public class ConfigManager {
     
     public FileConfiguration getConfig() { return config; }
     
+    // ========== НАСТРОЙКИ КОНСОЛИ ==========
+    
+    public boolean isConsoleViolationMessageEnabled() {
+        return config.getBoolean("console.violation-message-enabled", false);
+    }
+    
+    // ========== НАСТРОЙКИ КОМАНД НАРУШЕНИЙ ==========
+    
     public boolean isViolationCommandsEnabled() {
         return config.getBoolean("violation-commands.enabled", false);
     }
@@ -42,6 +50,8 @@ public class ConfigManager {
         return config.getStringList("violation-commands.commands");
     }
     
+    // ========== НАСТРОЙКИ ПРОВЕРОК ==========
+    
     public int getCheckRadius() {
         return config.getInt("checks.radius", 60);
     }
@@ -53,6 +63,8 @@ public class ConfigManager {
     public int getSessionTimeoutSeconds() {
         return config.getInt("session.timeout-seconds", 1800);
     }
+    
+    // ========== МЯГКАЯ ПРОВЕРКА (ПОХОЖИЕ ИМЕНА) ==========
     
     public boolean isSoftCheckEnabled() {
         return config.getBoolean("soft-check.enabled", true);
@@ -70,6 +82,8 @@ public class ConfigManager {
         return config.getInt("soft-check.new-time-window-seconds", 21600);
     }
     
+    // ========== УВЕДОМЛЕНИЯ ПЕРСОНАЛА ==========
+    
     public boolean isStaffNotificationsDefaultEnabled() {
         return config.getBoolean("staff-notifications.default-enabled", false);
     }
@@ -82,6 +96,8 @@ public class ConfigManager {
         return config.getStringList("staff-notifications.format");
     }
     
+    // ========== ЛОГИРОВАНИЕ ==========
+    
     public boolean isLoggingEnabled() {
         return config.getBoolean("logging.enabled", true);
     }
@@ -93,44 +109,36 @@ public class ConfigManager {
     public String getLogFormat() {
         return config.getString("logging.format", "! {player} {cause} {uuid} {ip} {x},{y},{z} {reason}");
     }
-
+    
+    // ========== МАКСИМУМ ПРЕДУПРЕЖДЕНИЙ ==========
+    
     public int getDefaultMaxWarns() {
-    return config.getInt("max-warns.default", 10);
-   }
-
-   public String getMaxWarnsPermission() {
-   return config.getString("max-warns.permission", "stcp.maxwarns.");
-   }
-
-   public boolean isMaxWarnsCommandsEnabled() {
-   return config.getBoolean("max-warns-commands.enabled", true);
-   }
-
-   public int getMaxWarnsCommandCooldown() {
-   return config.getInt("max-warns-commands.cooldown-seconds", 300);
-   }
-
-   public List<String> getMaxWarnsCommands() {
-   return config.getStringList("max-warns-commands.commands");
-   }
-
-   public String getBypassPermission() {
-   return config.getString("bypass-permission", "stcp.bypass");
-   }
-
-   public String getProtectedPermission() {
-   return config.getString("protected-permission", "stcp.protected");
-   }
+        return config.getInt("max-warns.default", 10);
+    }
     
-   public boolean isConsoleViolationMessageEnabled() {
-   return config.getBoolean("console.violation-message-enabled", true);
-   }
+    public String getMaxWarnsPermission() {
+        return config.getString("max-warns.permission", "stcp.maxwarns.");
+    }
     
-   public String getBypassPermission() {
-   return config.getString("bypass-permission", "stcp.bypass");
-   }
+    public boolean isMaxWarnsCommandsEnabled() {
+        return config.getBoolean("max-warns-commands.enabled", true);
+    }
     
-   public String getProtectedPermission() {
-   return config.getString("protected-permission", "stcp.protected");
-   }
+    public int getMaxWarnsCommandCooldown() {
+        return config.getInt("max-warns-commands.cooldown-seconds", 300);
+    }
+    
+    public List<String> getMaxWarnsCommands() {
+        return config.getStringList("max-warns-commands.commands");
+    }
+    
+    // ========== ПРАВА (ТОЛЬКО ОДИН РАЗ!) ==========
+    
+    public String getBypassPermission() {
+        return config.getString("bypass-permission", "stcp.bypass");
+    }
+    
+    public String getProtectedPermission() {
+        return config.getString("protected-permission", "stcp.protected");
+    }
 }
