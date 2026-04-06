@@ -44,8 +44,9 @@ max-warns-commands:
     - "asConsole! tempban {player} 1h Превышение лимита предупреждений"
     - "asPlayer! msg {player} &cТы получил бан на 1 час за {maxwarns} предупреждений!"
 
-# Право обхода проверок
-bypass-permission: "stcp.bypass"
+# Права обхода проверок
+bypass-permission: "stcp.bypass"      # Обход проверок (не получает варны)
+protected-permission: "stcp.protected" # Защита вещей (его блоки не мониторятся)
 
 # Staff notification settings
 staff-notifications:
