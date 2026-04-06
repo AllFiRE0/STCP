@@ -4,6 +4,7 @@ import com.allfire.sessiontracker.SessionTracker;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class NotificationsCommand {
@@ -30,9 +31,9 @@ public class NotificationsCommand {
         boolean newState = !current;
         plugin.getViolationManager().setStaffNotificationsEnabled(player.getUniqueId(), newState);
         
-        String status = plugin.getLanguageManager().getMessage("commands.notifications." + (newState ? "enabled" : "disabled"));
-        sender.sendMessage(plugin.getLanguageManager().getMessage("commands.notifications.toggled",
-            Map.of("status", status)));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("status", plugin.getLanguageManager().getMessage("commands.notifications." + (newState ? "enabled" : "disabled")));
+        sender.sendMessage(plugin.getLanguageManager().getMessage("commands.notifications.toggled", placeholders));
         return true;
     }
 }
