@@ -5,9 +5,10 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ConfigManager {
     
@@ -30,14 +31,12 @@ public class ConfigManager {
     
     public FileConfiguration getConfig() { return config; }
     
-    // ========== НАСТРОЙКИ КОНСОЛИ ==========
-    
+    // Консоль
     public boolean isConsoleViolationMessageEnabled() {
         return config.getBoolean("console.violation-message-enabled", false);
     }
     
-    // ========== НАСТРОЙКИ КОМАНД НАРУШЕНИЙ ==========
-    
+    // Команды нарушений
     public boolean isViolationCommandsEnabled() {
         return config.getBoolean("violation-commands.enabled", false);
     }
@@ -50,8 +49,7 @@ public class ConfigManager {
         return config.getStringList("violation-commands.commands");
     }
     
-    // ========== НАСТРОЙКИ ПРОВЕРОК ==========
-    
+    // Проверки
     public int getCheckRadius() {
         return config.getInt("checks.radius", 60);
     }
@@ -64,8 +62,7 @@ public class ConfigManager {
         return config.getInt("session.timeout-seconds", 1800);
     }
     
-    // ========== МЯГКАЯ ПРОВЕРКА (ПОХОЖИЕ ИМЕНА) ==========
-    
+    // Мягкая проверка
     public boolean isSoftCheckEnabled() {
         return config.getBoolean("soft-check.enabled", true);
     }
@@ -82,8 +79,7 @@ public class ConfigManager {
         return config.getInt("soft-check.new-time-window-seconds", 21600);
     }
     
-    // ========== УВЕДОМЛЕНИЯ ПЕРСОНАЛА ==========
-    
+    // Уведомления
     public boolean isStaffNotificationsDefaultEnabled() {
         return config.getBoolean("staff-notifications.default-enabled", false);
     }
@@ -96,8 +92,7 @@ public class ConfigManager {
         return config.getStringList("staff-notifications.format");
     }
     
-    // ========== ЛОГИРОВАНИЕ ==========
-    
+    // Логирование
     public boolean isLoggingEnabled() {
         return config.getBoolean("logging.enabled", true);
     }
@@ -110,10 +105,9 @@ public class ConfigManager {
         return config.getString("logging.format", "! {player} {cause} {uuid} {ip} {x},{y},{z} {reason}");
     }
     
-    // ========== МАКСИМУМ ПРЕДУПРЕЖДЕНИЙ ==========
-    
+    // Max warns
     public int getDefaultMaxWarns() {
-        return config.getInt("max-warns.default", 10);
+        return config.getInt("max-warns.default", 5);
     }
     
     public String getMaxWarnsPermission() {
@@ -125,15 +119,41 @@ public class ConfigManager {
     }
     
     public int getMaxWarnsCommandCooldown() {
-        return config.getInt("max-warns-commands.cooldown-seconds", 300);
+        return config.getInt("max-warns-commands.cooldown-seconds", 1);
     }
     
-    public List<String> getMaxWarnsCommands() {
-        return config.getStringList("max-warns-commands.commands");
+    public List<Map<String, String>> getMaxWarnsCommandsWithConditions() {
+        List<Map<String, String>> result = new ArrayList<>();
+        List<?> commandsList = config.getList("max-warns-commands.commands");
+        
+        if (commandsList == null) {
+            return result;
+        }
+        
+        for (Object obj : commandsList) {
+            if (obj instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, String> cmdMap = (Map<String, String>) obj;
+                Map<String, String> entry = new HashMap<>();
+                entry.put("condition", cmdMap.getOrDefault("condition", ""));
+                entry.put("command", cmdMap.getOrDefault("command", ""));
+                result.add(entry);
+            } else if (obj instanceof String) {
+                Map<String, String> entry = new HashMap<>();
+                entry.put("condition", "");
+                entry.put("command", (String) obj);
+                result.add(entry);
+            }
+        }
+        return result;
     }
     
-    // ========== ПРАВА (ТОЛЬКО ОДИН РАЗ!) ==========
+    // Настройка выдачи предупреждений
+    public boolean isWarnEnabled() {
+        return config.getBoolean("warn-settings.enabled", true);
+    }
     
+    // Права
     public String getBypassPermission() {
         return config.getString("bypass-permission", "stcp.bypass");
     }
