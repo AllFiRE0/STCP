@@ -117,4 +117,8 @@ public class ConfigManager {
    public String getBypassPermission() {
    return config.getString("bypass-permission", "stcp.bypass");
    }
+
+   public String getProtectedPermission() {
+   return config.getString("protected-permission", "stcp.protected");
+   }
 }
