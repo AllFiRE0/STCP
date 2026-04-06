@@ -16,7 +16,7 @@ public class ViolationManager {
     private final SessionTracker plugin;
     private final Map<UUID, List<Violation>> violations;
     private final Map<UUID, Long> lastCommandExecution;
-    private final Map<UUID, Long> lastMaxWarnsExecution;  // <-- НОВОЕ ПОЛЕ
+    private final Map<UUID, Long> lastMaxWarnsExecution;
     private final Map<UUID, Boolean> staffNotificationsEnabled;
     private final SimpleDateFormat dateFormat;
     
@@ -24,7 +24,7 @@ public class ViolationManager {
         this.plugin = plugin;
         this.violations = new ConcurrentHashMap<>();
         this.lastCommandExecution = new ConcurrentHashMap<>();
-        this.lastMaxWarnsExecution = new ConcurrentHashMap<>();  // <-- ИНИЦИАЛИЗАЦИЯ
+        this.lastMaxWarnsExecution = new ConcurrentHashMap<>();
         this.staffNotificationsEnabled = new ConcurrentHashMap<>();
         this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     }
@@ -46,8 +46,11 @@ public class ViolationManager {
         executeViolationCommands(violation);
         notifyStaff(violation);
         
-        plugin.getLogger().info(plugin.getLanguageManager().getMessage("console.violation_detected",
-            Map.of("player", playerName, "victim", victimName, "cause", cause)));
+        // Консольное сообщение о нарушении (можно отключить)
+        if (plugin.getConfigManager().isConsoleViolationMessageEnabled()) {
+            plugin.getLogger().info(plugin.getLanguageManager().getMessage("console.violation_detected",
+                Map.of("player", playerName, "victim", victimName, "cause", cause)));
+        }
     }
     
     private void executeViolationCommands(Violation violation) {
@@ -65,6 +68,8 @@ public class ViolationManager {
         
         List<String> commands = plugin.getConfigManager().getViolationCommands();
         Map<String, String> placeholders = new HashMap<>();
+        
+        // Базовые заполнители
         placeholders.put("player", violation.getPlayerName());
         placeholders.put("victim", violation.getVictimName());
         placeholders.put("cause", violation.getCause());
@@ -75,7 +80,17 @@ public class ViolationManager {
         placeholders.put("world", violation.getWorld());
         placeholders.put("uuid", violation.getPlayerUuid().toString());
         placeholders.put("ip", violation.getIp());
-        placeholders.put("warns", String.valueOf(plugin.getWarnManager().getWarnCount(violation.getPlayerUuid())));
+        
+        // warn и maxwarn
+        int warns = plugin.getWarnManager().getWarnCount(violation.getPlayerUuid());
+        placeholders.put("warns", String.valueOf(warns));
+        
+        Player player = Bukkit.getPlayer(violation.getPlayerUuid());
+        int maxWarns = plugin.getConfigManager().getDefaultMaxWarns();
+        if (player != null) {
+            maxWarns = plugin.getWarnManager().getMaxWarns(player);
+        }
+        placeholders.put("maxwarns", String.valueOf(maxWarns));
         
         for (String command : commands) {
             String processed = command;
@@ -88,17 +103,15 @@ public class ViolationManager {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
             } else if (processed.startsWith("asPlayer!")) {
                 String cmd = processed.substring("asPlayer!".length()).trim();
-                Player player = Bukkit.getPlayer(violation.getPlayerUuid());
-                if (player != null) {
-                    player.performCommand(cmd);
+                Player target = Bukkit.getPlayer(violation.getPlayerUuid());
+                if (target != null) {
+                    target.performCommand(cmd);
                 }
             }
         }
     }
     
-    // ========== НОВЫЙ МЕТОД ДЛЯ КОМАНД ПРИ ДОСТИЖЕНИИ МАКСИМУМА ПРЕДУПРЕЖДЕНИЙ ==========
-    
-    public void executeMaxWarnsCommands(Player player, int warns, int maxWarns) {
+    public void executeMaxWarnsCommands(Player player, int warns, int maxWarns, String victimName) {
         if (!plugin.getConfigManager().isMaxWarnsCommandsEnabled()) {
             return;
         }
@@ -114,6 +127,7 @@ public class ViolationManager {
         List<String> commands = plugin.getConfigManager().getMaxWarnsCommands();
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("player", player.getName());
+        placeholders.put("victim", victimName != null ? victimName : "unknown");
         placeholders.put("warns", String.valueOf(warns));
         placeholders.put("maxwarns", String.valueOf(maxWarns));
         placeholders.put("uuid", player.getUniqueId().toString());
@@ -138,8 +152,6 @@ public class ViolationManager {
             }
         }
     }
-    
-    // ========== ОСТАЛЬНЫЕ МЕТОДЫ БЕЗ ИЗМЕНЕНИЙ ==========
     
     private void notifyStaff(Violation violation) {
         List<String> format = plugin.getConfigManager().getStaffNotificationFormat();
@@ -204,8 +216,20 @@ public class ViolationManager {
         return violations.getOrDefault(uuid, new ArrayList<>()).size();
     }
     
+    public int getTotalViolationCount() {
+        int total = 0;
+        for (List<Violation> list : violations.values()) {
+            total += list.size();
+        }
+        return total;
+    }
+    
     public void clearViolations(UUID uuid) {
         violations.remove(uuid);
+    }
+    
+    public void clearAllViolations() {
+        violations.clear();
     }
     
     public void setStaffNotificationsEnabled(UUID uuid, boolean enabled) {
@@ -214,5 +238,13 @@ public class ViolationManager {
     
     public boolean isStaffNotificationsEnabled(UUID uuid) {
         return staffNotificationsEnabled.getOrDefault(uuid, plugin.getConfigManager().isStaffNotificationsDefaultEnabled());
+    }
+    
+    public void reload() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (!staffNotificationsEnabled.containsKey(player.getUniqueId())) {
+                staffNotificationsEnabled.put(player.getUniqueId(), plugin.getConfigManager().isStaffNotificationsDefaultEnabled());
+            }
+        }
     }
 }
