@@ -29,7 +29,6 @@ public class Session {
         long now = System.currentTimeMillis();
         totalPlayTime += (now - lastActivity);
         lastActivity = now;
-        // Обновляем статус защищённости
         Player player = Bukkit.getPlayer(uuid);
         if (player != null) {
             this.isProtected = player.hasPermission("stcp.protected");
