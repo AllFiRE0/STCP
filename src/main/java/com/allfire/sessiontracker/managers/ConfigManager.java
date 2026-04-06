@@ -121,4 +121,16 @@ public class ConfigManager {
    public String getProtectedPermission() {
    return config.getString("protected-permission", "stcp.protected");
    }
+    
+   public boolean isConsoleViolationMessageEnabled() {
+   return config.getBoolean("console.violation-message-enabled", true);
+   }
+    
+   public String getBypassPermission() {
+   return config.getString("bypass-permission", "stcp.bypass");
+   }
+    
+   public String getProtectedPermission() {
+   return config.getString("protected-permission", "stcp.protected");
+   }
 }
