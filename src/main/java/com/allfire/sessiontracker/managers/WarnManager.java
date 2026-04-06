@@ -72,6 +72,10 @@ public class WarnManager {
     }
     
     public void addWarn(Player player, int amount) {
+        addWarn(player, amount, null);
+    }
+    
+    public void addWarn(Player player, int amount, String victimName) {
         UUID uuid = player.getUniqueId();
         int current = warns.getOrDefault(uuid, 0);
         int newAmount = Math.min(current + amount, 100);
@@ -80,7 +84,7 @@ public class WarnManager {
         
         int maxWarns = getMaxWarns(player);
         if (newAmount >= maxWarns) {
-            plugin.getViolationManager().executeMaxWarnsCommands(player, newAmount, maxWarns);
+            plugin.getViolationManager().executeMaxWarnsCommands(player, newAmount, maxWarns, victimName);
         }
     }
     
