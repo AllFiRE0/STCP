@@ -2,6 +2,7 @@ package com.allfire.sessiontracker.managers;
 
 import com.allfire.sessiontracker.SessionTracker;
 import com.allfire.sessiontracker.models.Violation;
+import com.allfire.sessiontracker.utils.ConditionChecker;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -29,7 +30,6 @@ public class ViolationManager {
         this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     }
     
-    // Универсальный метод для создания заполнителей
     private Map<String, String> createPlaceholders(Player player, Violation violation, String victimName, int warns, int maxWarns) {
         Map<String, String> placeholders = new HashMap<>();
         
@@ -144,14 +144,37 @@ public class ViolationManager {
         
         lastMaxWarnsExecution.put(player.getUniqueId(), now);
         
-        List<String> commands = plugin.getConfigManager().getMaxWarnsCommands();
+        List<Map<String, String>> commandsWithConditions = plugin.getConfigManager().getMaxWarnsCommandsWithConditions();
         
-        Map<String, String> placeholders = createPlaceholders(player, null, victimName, warns, maxWarns);
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("player", player.getName());
+        placeholders.put("victim", victimName != null ? victimName : "unknown");
+        placeholders.put("warns", String.valueOf(warns));
+        placeholders.put("maxwarns", String.valueOf(maxWarns));
+        placeholders.put("uuid", player.getUniqueId().toString());
+        if (player.getAddress() != null) {
+            placeholders.put("ip", player.getAddress().getAddress().getHostAddress());
+        } else {
+            placeholders.put("ip", "unknown");
+        }
         
-        for (String command : commands) {
+        ConditionChecker conditionChecker = new ConditionChecker(plugin);
+        
+        for (Map<String, String> entry : commandsWithConditions) {
+            String condition = entry.get("condition");
+            String command = entry.get("command");
+            
+            if (command == null || command.isEmpty()) continue;
+            
+            if (condition != null && !condition.isEmpty()) {
+                if (!conditionChecker.checkCondition(condition, placeholders)) {
+                    continue;
+                }
+            }
+            
             String processed = command;
-            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-                processed = processed.replace("{" + entry.getKey() + "}", entry.getValue());
+            for (Map.Entry<String, String> e : placeholders.entrySet()) {
+                processed = processed.replace("{" + e.getKey() + "}", e.getValue());
             }
             
             if (processed.startsWith("asConsole!")) {
@@ -199,8 +222,6 @@ public class ViolationManager {
             File logFile = new File(plugin.getDataFolder(), plugin.getConfigManager().getLogFile() + ".log");
             String format = plugin.getConfigManager().getLogFormat();
             
-            int warns = plugin.getWarnManager().getWarnCount(violation.getPlayerUuid());
-            
             String entry = format
                 .replace("{player}", violation.getPlayerName())
                 .replace("{victim}", violation.getVictimName())
@@ -211,9 +232,7 @@ public class ViolationManager {
                 .replace("{x}", String.valueOf(violation.getX()))
                 .replace("{y}", String.valueOf(violation.getY()))
                 .replace("{z}", String.valueOf(violation.getZ()))
-                .replace("{world}", violation.getWorld())
-                .replace("{warns}", String.valueOf(warns))
-                .replace("{time}", dateFormat.format(new Date(violation.getTimestamp())));
+                .replace("{world}", violation.getWorld());
             
             try (FileWriter fw = new FileWriter(logFile, true);
                  PrintWriter pw = new PrintWriter(fw)) {
@@ -263,4 +282,4 @@ public class ViolationManager {
             }
         }
     }
-}
+                                  }
