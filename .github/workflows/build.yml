@@ -3,6 +3,8 @@ name: Build SessionTrackerCP Plugin
 on:
   push:
     branches: [ main, master ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -23,8 +25,33 @@ jobs:
       - name: Build with Maven
         run: mvn clean package --file pom.xml -DskipTests
       
-      - name: Upload JAR artifact
+      - name: Upload JAR artifact (для тестов)
         uses: actions/upload-artifact@v4
         with:
           name: SessionTrackerCP-Plugin
           path: target/*.jar
+      
+      - name: Create Release (при пуше тега)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/*.jar
+          name: SessionTrackerCP ${{ github.ref_name }}
+          body: |
+            ## SessionTrackerCP ${{ github.ref_name }}
+            
+            ### Что нового?
+            - Автоматическая сборка релиза
+            - Скачайте JAR и установите в папку plugins
+            
+            ### Установка
+            1. Скачайте SessionTrackerCP-1.0.0.jar
+            2. Поместите в папку `plugins/`
+            3. Перезапустите сервер
+            
+            ### Конфигурация
+            После первого запуска отредактируйте `plugins/SessionTrackerCP/config.yml`
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
