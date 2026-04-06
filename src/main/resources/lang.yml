@@ -27,11 +27,12 @@ commands:
   view:
     title: "&6=== Нарушения игрока {player} ==="
     empty: "&7У игрока нет нарушений"
-    entry: " &8• &c{time} &7| &f{cause} &7| Жертва: &f{victim}"
+    entry: " &8• &c{time} &7| &f{cause} &7| Жертва: &f{victim} &7| &fx{x} y{y} z{z}"
   
   warn:
     added: "&aДобавлено {amount} предупреждение(ий) игроку {player} (Всего: {total})"
     removed: "&cСнято {amount} предупреждение(ий) у игрока {player} (Осталось: {total})"
+    not_enough: "&cУ игрока нет {amount} предупреждений"
     current: "&eУ игрока {player} &f{total} &eпредупреждений"
   
   info:
@@ -40,7 +41,7 @@ commands:
     warns: "&eПредупреждений: &f{warns}"
     violations: "&eНарушений: &f{violations}"
 
-# Уведомления
+# Уведомления для персонала
 notifications:
   header: "&m----------------------------------------"
   footer: "&m----------------------------------------"
@@ -48,4 +49,7 @@ notifications:
   player: "&eНарушитель: &f{player}"
   victim: "&eЖертва: &f{victim}"
   cause: "&eТип: &f{cause}"
-  coordinates: "&eКоординаты: &f{x}, {y}, {z}"
+  coordinates: "&eКоординаты: &f{x} {y} {z}"
+  world: "&eМир: &f{world}"
+  time: "&eВремя: &f{time}"
+  warns: "&eПредупреждений: &f{warns}/{maxwarns}"
