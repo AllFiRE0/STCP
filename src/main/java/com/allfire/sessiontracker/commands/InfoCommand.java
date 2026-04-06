@@ -6,6 +6,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class InfoCommand {
@@ -40,14 +41,16 @@ public class InfoCommand {
         int warns = plugin.getWarnManager().getWarnCount(target.getUniqueId());
         int violations = plugin.getViolationManager().getViolationCount(target.getUniqueId());
         
-        sender.sendMessage(plugin.getLanguageManager().getMessage("commands.info.title",
-            Map.of("player", target.getName() != null ? target.getName() : "Unknown")));
-        sender.sendMessage(plugin.getLanguageManager().getMessage("commands.info.uuid",
-            Map.of("uuid", target.getUniqueId().toString())));
-        sender.sendMessage(plugin.getLanguageManager().getMessage("commands.info.warns",
-            Map.of("warns", String.valueOf(warns))));
-        sender.sendMessage(plugin.getLanguageManager().getMessage("commands.info.violations",
-            Map.of("violations", String.valueOf(violations))));
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("player", target.getName() != null ? target.getName() : "Unknown");
+        placeholders.put("uuid", target.getUniqueId().toString());
+        placeholders.put("warns", String.valueOf(warns));
+        placeholders.put("violations", String.valueOf(violations));
+        
+        sender.sendMessage(plugin.getLanguageManager().getMessage("commands.info.title", placeholders));
+        sender.sendMessage(plugin.getLanguageManager().getMessage("commands.info.uuid", placeholders));
+        sender.sendMessage(plugin.getLanguageManager().getMessage("commands.info.warns", placeholders));
+        sender.sendMessage(plugin.getLanguageManager().getMessage("commands.info.violations", placeholders));
         
         return true;
     }
