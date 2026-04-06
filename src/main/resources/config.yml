@@ -12,6 +12,9 @@ config-version: 2
 # Session settings
 session:
   timeout-seconds: 1800
+# Console msg (spam?)
+console:
+  violation-message-enabled: false
 
 # Cheks settings
 checks:
