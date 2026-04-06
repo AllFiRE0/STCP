@@ -36,7 +36,7 @@ public class InteractionListener implements Listener {
     }
     
     private void handleInteraction(Player player, String eventType, Location location) {
-        // Право 1: stcp.bypass - игрок не получает предупреждения
+        // Право 1: stcp.bypass - игрок НЕ получает предупреждения (по умолчанию false)
         if (player.hasPermission(plugin.getConfigManager().getBypassPermission())) {
             return;
         }
@@ -50,7 +50,7 @@ public class InteractionListener implements Listener {
         for (Session other : plugin.getSessionManager().getSessions()) {
             if (other.getPlayerName().equals(player.getName())) continue;
             
-            // Право 2: stcp.protected - вещи этого игрока не мониторятся
+            // Право 2: stcp.protected - вещи этого игрока НЕ мониторятся (по умолчанию false)
             if (other.isProtected()) {
                 continue;
             }
@@ -59,15 +59,19 @@ public class InteractionListener implements Listener {
                 if (System.currentTimeMillis() - interaction.getTimestamp() > timeWindow) continue;
                 if (location.distance(interaction.getLocation()) <= radius) {
                     
+                    // Добавляем нарушение и предупреждение
                     plugin.getViolationManager().addViolation(
                         player.getUniqueId(),
                         player.getName(),
                         other.getPlayerName(),
                         eventType,
-                        "Подозрительное взаимодействие рядом с действиями " + other.getPlayerName(),
+                        "Подозрительное взаимодействие",
                         location,
                         player.getAddress().getAddress().getHostAddress()
                     );
+                    
+                    // Выдаём предупреждение нарушителю
+                    plugin.getWarnManager().addWarn(player, 1, other.getPlayerName());
                     return;
                 }
             }
