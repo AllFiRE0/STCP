@@ -43,9 +43,10 @@ max-warns-commands:
   enabled: true
   cooldown-seconds: 300
   commands:
-    - "asConsole! broadcast &c[!] &6{player} &7достиг &c{maxwarns} &7предупреждений и был наказан!"
-    - "asConsole! tempban {player} 1h Превышение лимита предупреждений"
-    - "asPlayer! msg {player} &cТы получил бан на 1 час за {maxwarns} предупреждений!"
+    #- condition: "{warns} > {maxwarns}"
+    - command: "asConsole! broadcast &c[!] &7Игрок &6{player} &7наказан за превышение &c{maxwarns} &7предупреждений!"
+    #- command: "asConsole! tempban {player} 1h Превышение лимита предупреждений"
+    #- command: "asPlayer! msg {player} &cТы получил бан на 1 час за {maxwarns} предупреждений!"
 
 # Права обхода проверок
 bypass-permission: "stcp.bypass"      # Обход проверок (не получает варны)
