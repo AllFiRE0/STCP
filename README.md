@@ -95,8 +95,11 @@ max-warns-commands:
   commands:
     - "asConsole! tempban {player} 1h"
 
-# Право обхода проверок
+# Права обхода проверок
+# Не получает предупреждения 
 bypass-permission: "stcp.bypass"
+# Не отслеживать действия(для администрации)
+protected-permission: "stcp.protected"
 
 # Уведомления персонала
 staff-notifications:
