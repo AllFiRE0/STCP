@@ -29,6 +29,39 @@ public class ViolationManager {
         this.dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     }
     
+    // Универсальный метод для создания заполнителей
+    private Map<String, String> createPlaceholders(Player player, Violation violation, String victimName, int warns, int maxWarns) {
+        Map<String, String> placeholders = new HashMap<>();
+        
+        if (player != null) {
+            placeholders.put("player", player.getName());
+            placeholders.put("uuid", player.getUniqueId().toString());
+            if (player.getAddress() != null) {
+                placeholders.put("ip", player.getAddress().getAddress().getHostAddress());
+            } else {
+                placeholders.put("ip", "unknown");
+            }
+        }
+        
+        if (violation != null) {
+            placeholders.put("victim", violation.getVictimName() != null ? violation.getVictimName() : (victimName != null ? victimName : "unknown"));
+            placeholders.put("cause", violation.getCause() != null ? violation.getCause() : "unknown");
+            placeholders.put("reason", violation.getReason() != null ? violation.getReason() : "unknown");
+            placeholders.put("x", String.valueOf(violation.getX()));
+            placeholders.put("y", String.valueOf(violation.getY()));
+            placeholders.put("z", String.valueOf(violation.getZ()));
+            placeholders.put("world", violation.getWorld() != null ? violation.getWorld() : "unknown");
+            placeholders.put("time", dateFormat.format(new Date(violation.getTimestamp())));
+        } else if (victimName != null) {
+            placeholders.put("victim", victimName);
+        }
+        
+        placeholders.put("warns", String.valueOf(warns));
+        placeholders.put("maxwarns", String.valueOf(maxWarns));
+        
+        return placeholders;
+    }
+    
     public void addViolation(UUID playerUuid, String playerName, String victimName, 
                              String cause, String reason, Location location, String ip) {
         Violation violation = new Violation(
@@ -46,10 +79,12 @@ public class ViolationManager {
         executeViolationCommands(violation);
         notifyStaff(violation);
         
-        // Консольное сообщение о нарушении (можно отключить)
         if (plugin.getConfigManager().isConsoleViolationMessageEnabled()) {
-            plugin.getLogger().info(plugin.getLanguageManager().getMessage("console.violation_detected",
-                Map.of("player", playerName, "victim", victimName, "cause", cause)));
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("player", playerName);
+            placeholders.put("victim", victimName);
+            placeholders.put("cause", cause);
+            plugin.getLogger().info(plugin.getLanguageManager().getMessage("console.violation_detected", placeholders));
         }
     }
     
@@ -67,30 +102,15 @@ public class ViolationManager {
         lastCommandExecution.put(violation.getPlayerUuid(), now);
         
         List<String> commands = plugin.getConfigManager().getViolationCommands();
-        Map<String, String> placeholders = new HashMap<>();
         
-        // Базовые заполнители
-        placeholders.put("player", violation.getPlayerName());
-        placeholders.put("victim", violation.getVictimName());
-        placeholders.put("cause", violation.getCause());
-        placeholders.put("reason", violation.getReason());
-        placeholders.put("x", String.valueOf(violation.getX()));
-        placeholders.put("y", String.valueOf(violation.getY()));
-        placeholders.put("z", String.valueOf(violation.getZ()));
-        placeholders.put("world", violation.getWorld());
-        placeholders.put("uuid", violation.getPlayerUuid().toString());
-        placeholders.put("ip", violation.getIp());
-        
-        // warn и maxwarn
         int warns = plugin.getWarnManager().getWarnCount(violation.getPlayerUuid());
-        placeholders.put("warns", String.valueOf(warns));
-        
         Player player = Bukkit.getPlayer(violation.getPlayerUuid());
         int maxWarns = plugin.getConfigManager().getDefaultMaxWarns();
         if (player != null) {
             maxWarns = plugin.getWarnManager().getMaxWarns(player);
         }
-        placeholders.put("maxwarns", String.valueOf(maxWarns));
+        
+        Map<String, String> placeholders = createPlaceholders(player, violation, null, warns, maxWarns);
         
         for (String command : commands) {
             String processed = command;
@@ -125,17 +145,8 @@ public class ViolationManager {
         lastMaxWarnsExecution.put(player.getUniqueId(), now);
         
         List<String> commands = plugin.getConfigManager().getMaxWarnsCommands();
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("player", player.getName());
-        placeholders.put("victim", victimName != null ? victimName : "unknown");
-        placeholders.put("warns", String.valueOf(warns));
-        placeholders.put("maxwarns", String.valueOf(maxWarns));
-        placeholders.put("uuid", player.getUniqueId().toString());
-        if (player.getAddress() != null) {
-            placeholders.put("ip", player.getAddress().getAddress().getHostAddress());
-        } else {
-            placeholders.put("ip", "unknown");
-        }
+        
+        Map<String, String> placeholders = createPlaceholders(player, null, victimName, warns, maxWarns);
         
         for (String command : commands) {
             String processed = command;
@@ -157,15 +168,14 @@ public class ViolationManager {
         List<String> format = plugin.getConfigManager().getStaffNotificationFormat();
         String permission = plugin.getConfigManager().getStaffPermission();
         
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("player", violation.getPlayerName());
-        placeholders.put("victim", violation.getVictimName());
-        placeholders.put("cause", violation.getCause());
-        placeholders.put("x", String.valueOf(violation.getX()));
-        placeholders.put("y", String.valueOf(violation.getY()));
-        placeholders.put("z", String.valueOf(violation.getZ()));
-        placeholders.put("world", violation.getWorld());
-        placeholders.put("time", dateFormat.format(new Date(violation.getTimestamp())));
+        int warns = plugin.getWarnManager().getWarnCount(violation.getPlayerUuid());
+        Player player = Bukkit.getPlayer(violation.getPlayerUuid());
+        int maxWarns = plugin.getConfigManager().getDefaultMaxWarns();
+        if (player != null) {
+            maxWarns = plugin.getWarnManager().getMaxWarns(player);
+        }
+        
+        Map<String, String> placeholders = createPlaceholders(player, violation, null, warns, maxWarns);
         
         List<String> lines = new ArrayList<>();
         for (String line : format) {
@@ -175,10 +185,10 @@ public class ViolationManager {
             lines.add(org.bukkit.ChatColor.translateAlternateColorCodes('&', line));
         }
         
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.hasPermission(permission) && isStaffNotificationsEnabled(player.getUniqueId())) {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.hasPermission(permission) && isStaffNotificationsEnabled(p.getUniqueId())) {
                 for (String line : lines) {
-                    player.sendMessage(line);
+                    p.sendMessage(line);
                 }
             }
         }
@@ -188,16 +198,22 @@ public class ViolationManager {
         try {
             File logFile = new File(plugin.getDataFolder(), plugin.getConfigManager().getLogFile() + ".log");
             String format = plugin.getConfigManager().getLogFormat();
+            
+            int warns = plugin.getWarnManager().getWarnCount(violation.getPlayerUuid());
+            
             String entry = format
                 .replace("{player}", violation.getPlayerName())
                 .replace("{victim}", violation.getVictimName())
                 .replace("{cause}", violation.getCause())
+                .replace("{reason}", violation.getReason())
                 .replace("{uuid}", violation.getPlayerUuid().toString())
                 .replace("{ip}", violation.getIp())
                 .replace("{x}", String.valueOf(violation.getX()))
                 .replace("{y}", String.valueOf(violation.getY()))
                 .replace("{z}", String.valueOf(violation.getZ()))
-                .replace("{reason}", violation.getReason());
+                .replace("{world}", violation.getWorld())
+                .replace("{warns}", String.valueOf(warns))
+                .replace("{time}", dateFormat.format(new Date(violation.getTimestamp())));
             
             try (FileWriter fw = new FileWriter(logFile, true);
                  PrintWriter pw = new PrintWriter(fw)) {
