@@ -30,7 +30,8 @@
 | `sessiontracker.user` | Доступ к `/stcp info` |
 | `sessiontracker.staff` | Доступ к `/stcp view` и уведомления |
 | `sessiontracker.admin` | Доступ ко всем командам |
-| `stcp.bypass` | Игнорирование проверок (для админов) |
+| `stcp.bypass` | Игрок НЕ получает предупреждения |
+| `stcp.protected` | Вещи игрока НЕ мониторятся |
 | `stcp.maxwarns.5` | Лимит 5 предупреждений |
 | `stcp.maxwarns.10` | Лимит 10 предупреждений |
 | `stcp.maxwarns.20` | Лимит 20 предупреждений |
@@ -51,6 +52,10 @@
 | `{ip}` | IP адрес |
 | `{warns}` | Текущее количество варнов |
 | `{maxwarns}` | Максимальный лимит варнов |
+| `{time}` | Время нарушения |
+| `{amount}` | Количество варнов при операции |
+| `{total}` | Общее количество варнов |
+| `{status}` | Статус (вкл/выкл) |
 
 ### Внешние (для PlaceholderAPI)
 
@@ -86,26 +91,66 @@ violation-commands:
 
 # Лимит предупреждений
 max-warns:
-  default: 10
+  default: 5
   permission: "stcp.maxwarns."
 
-# Команды при достижении лимита
+# Команды при достижении лимита (с поддержкой условий)
 max-warns-commands:
   enabled: true
+  cooldown-seconds: 1
   commands:
-    - "asConsole! tempban {player} 1h"
+    # Без условия - выполняется всегда
+    - command: "asConsole! log {player} достиг {warns} предупреждений"
+    
+    # С простым условием
+    - condition: "{warns} >= {maxwarns}"
+      command: "asConsole! broadcast &e{player} &7достиг лимита!"
+    
+    # Сложное условие с && (И) - оба условия должны быть true
+    - condition: "{warns} >= 3 && %player_time_hours% < 1"
+      command: "asConsole! kick {player} Вы слишком новичок!"
+    
+    # Сложное условие с || (ИЛИ) - достаточно одного true
+    - condition: "{warns} >= 5 || %player_kills% > 100"
+      command: "asConsole! tempban {player} 1h"
+    
+    # С внешним заполнителем PlaceholderAPI
+    - condition: "%vault_eco_balance% < 100"
+      command: "asConsole! eco take {player} 50"
 
-# Права обхода проверок
-# Не получает предупреждения 
-bypass-permission: "stcp.bypass"
-# Не отслеживать действия(для администрации)
-protected-permission: "stcp.protected"
+# Выдача предупреждений (вкл/выкл)
+warn-settings:
+  enabled: true
+
+# Права
+bypass-permission: "stcp.bypass"        # Не получает предупреждения
+protected-permission: "stcp.protected"  # Его вещи не мониторятся
 
 # Уведомления персонала
 staff-notifications:
   default-enabled: false
   permission: "sessiontracker.staff"
+
+# Консольные сообщения
+console:
+  violation-message-enabled: false      # true - показывать нарушения в консоли
 ```
+
+Поддержка условий в командах
+
+В разделе max-warns-commands можно использовать гибкие условия:
+
+Оператор Значение Пример
+> Больше {warns} > 5
+< Меньше {warns} < 3
+>= Больше или равно {warns} >= {maxwarns}
+<= Меньше или равно {warns} <= 0
+== Равно {warns} == 10
+!= Не равно {warns} != 0
+&& И (оба условия) {warns} >= 3 && %player_time_hours% < 1
+\|\| ИЛИ (одно из условий) {warns} >= 5 \|\| %player_kills% > 100
+
+Поддерживаются как внутренние заполнители ({warns}), так и внешние из PlaceholderAPI (%player_time_hours%).
 
 Префиксы в командах
 
@@ -125,4 +170,19 @@ asPlayer! Выполняет команду от имени игрока
 
 · Java 17+
 · Spigot/Paper 1.20.4+
-· PlaceholderAPI (опционально, для заполнителей)
+· PlaceholderAPI (опционально, для внешних заполнителей)
+
+
+```
+
+## Что добавлено нового:
+
+1. **Права** — добавлено `stcp.protected`
+2. **Заполнители** — добавлены `{time}`, `{amount}`, `{total}`, `{status}`
+3. **Раздел "Поддержка условий"** — таблица операторов и примеры
+4. **Новые настройки в конфиге**:
+   - `warn-settings.enabled`
+   - `console.violation-message-enabled`
+   - `max-warns-commands` с условиями
+5. **Примеры сложных условий** с `&&`, `||` и PlaceholderAPI
+6. **Более понятное описание прав**
