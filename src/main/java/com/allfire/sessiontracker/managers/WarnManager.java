@@ -61,14 +61,14 @@ public class WarnManager {
     
     public int getMaxWarns(Player player) {
         String permission = plugin.getConfigManager().getMaxWarnsPermission();
-        int maxWarns = plugin.getConfigManager().getDefaultMaxWarns();
+        int defaultMaxWarns = plugin.getConfigManager().getDefaultMaxWarns();
         
         for (int i = 100; i >= 1; i--) {
             if (player.hasPermission(permission + i)) {
                 return i;
             }
         }
-        return maxWarns;
+        return defaultMaxWarns;
     }
     
     public void addWarn(Player player, int amount) {
@@ -78,11 +78,16 @@ public class WarnManager {
     public void addWarn(Player player, int amount, String victimName) {
         UUID uuid = player.getUniqueId();
         int current = warns.getOrDefault(uuid, 0);
-        int newAmount = Math.min(current + amount, 100);
+        int maxWarns = getMaxWarns(player);
+        
+        if (current >= maxWarns) {
+            return;
+        }
+        
+        int newAmount = Math.min(current + amount, maxWarns);
         warns.put(uuid, newAmount);
         saveWarns();
         
-        int maxWarns = getMaxWarns(player);
         if (newAmount >= maxWarns) {
             plugin.getViolationManager().executeMaxWarnsCommands(player, newAmount, maxWarns, victimName);
         }
