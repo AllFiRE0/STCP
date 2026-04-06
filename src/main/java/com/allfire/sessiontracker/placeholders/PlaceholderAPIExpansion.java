@@ -39,12 +39,12 @@ public class PlaceholderAPIExpansion extends PlaceholderExpansion {
     public String onRequest(OfflinePlayer player, @NotNull String params) {
         if (player == null) return "";
         
-        // %stcp_warns% - текущие предупреждения игрока
+        // %stcp_warns%
         if (params.equalsIgnoreCase("warns")) {
             return String.valueOf(plugin.getWarnManager().getWarnCount(player.getUniqueId()));
         }
         
-        // %stcp_warns_{player}% - предупреждения указанного игрока
+        // %stcp_warns_{player}%
         if (params.toLowerCase().startsWith("warns_")) {
             String targetName = params.substring("warns_".length());
             OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
@@ -54,7 +54,7 @@ public class PlaceholderAPIExpansion extends PlaceholderExpansion {
             return "0";
         }
         
-        // %stcp_maxwarns% - макс. предупреждений для игрока
+        // %stcp_maxwarns%
         if (params.equalsIgnoreCase("maxwarns")) {
             Player onlinePlayer = player.getPlayer();
             if (onlinePlayer != null) {
@@ -63,7 +63,7 @@ public class PlaceholderAPIExpansion extends PlaceholderExpansion {
             return String.valueOf(plugin.getConfigManager().getDefaultMaxWarns());
         }
         
-        // %stcp_maxwarns_{player}% - макс. предупреждений указанного игрока
+        // %stcp_maxwarns_{player}%
         if (params.toLowerCase().startsWith("maxwarns_")) {
             String targetName = params.substring("maxwarns_".length());
             Player target = Bukkit.getPlayer(targetName);
@@ -73,12 +73,12 @@ public class PlaceholderAPIExpansion extends PlaceholderExpansion {
             return String.valueOf(plugin.getConfigManager().getDefaultMaxWarns());
         }
         
-        // %stcp_violations% - нарушения игрока
+        // %stcp_violations%
         if (params.equalsIgnoreCase("violations")) {
             return String.valueOf(plugin.getViolationManager().getViolationCount(player.getUniqueId()));
         }
         
-        // %stcp_violations_{player}% - нарушения указанного игрока
+        // %stcp_violations_{player}%
         if (params.toLowerCase().startsWith("violations_")) {
             String targetName = params.substring("violations_".length());
             OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
@@ -88,17 +88,17 @@ public class PlaceholderAPIExpansion extends PlaceholderExpansion {
             return "0";
         }
         
-        // %stcp_player% - имя текущего игрока
+        // %stcp_player%
         if (params.equalsIgnoreCase("player")) {
             return player.getName();
         }
         
-        // %stcp_player_uuid% - UUID текущего игрока
+        // %stcp_player_uuid%
         if (params.equalsIgnoreCase("player_uuid")) {
             return player.getUniqueId().toString();
         }
         
-        // %stcp_player_ip% - IP текущего игрока
+        // %stcp_player_ip%
         if (params.equalsIgnoreCase("player_ip")) {
             Player onlinePlayer = player.getPlayer();
             if (onlinePlayer != null && onlinePlayer.getAddress() != null) {
