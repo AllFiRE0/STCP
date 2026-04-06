@@ -36,9 +36,9 @@ public class InteractionListener implements Listener {
     }
     
     private void handleInteraction(Player player, String eventType, Location location) {
-        // ПРОВЕРКА НА ПРАВО ОБХОДА (ДЛЯ АДМИНОВ)
+        // Право 1: stcp.bypass - игрок не получает предупреждения
         if (player.hasPermission(plugin.getConfigManager().getBypassPermission())) {
-            return; // Админы и модераторы не проверяются
+            return;
         }
         
         plugin.getSessionManager().updateActivity(player);
@@ -49,6 +49,11 @@ public class InteractionListener implements Listener {
         
         for (Session other : plugin.getSessionManager().getSessions()) {
             if (other.getPlayerName().equals(player.getName())) continue;
+            
+            // Право 2: stcp.protected - вещи этого игрока не мониторятся
+            if (other.isProtected()) {
+                continue;
+            }
             
             for (Session.Interaction interaction : other.getInteractions()) {
                 if (System.currentTimeMillis() - interaction.getTimestamp() > timeWindow) continue;
