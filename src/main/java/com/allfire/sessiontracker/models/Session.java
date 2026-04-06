@@ -1,5 +1,6 @@
 package com.allfire.sessiontracker.models;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
@@ -12,6 +13,7 @@ public class Session {
     private long lastActivity;
     private long totalPlayTime;
     private final List<Interaction> interactions;
+    private boolean isProtected;
     
     public Session(Player player) {
         this.uuid = player.getUniqueId();
@@ -20,12 +22,18 @@ public class Session {
         this.lastActivity = System.currentTimeMillis();
         this.totalPlayTime = 0;
         this.interactions = new ArrayList<>();
+        this.isProtected = player.hasPermission("stcp.protected");
     }
     
     public void updateLastActivity() {
         long now = System.currentTimeMillis();
         totalPlayTime += (now - lastActivity);
         lastActivity = now;
+        // Обновляем статус защищённости
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null) {
+            this.isProtected = player.hasPermission("stcp.protected");
+        }
     }
     
     public void addInteraction(String eventType, Location location) {
@@ -40,6 +48,7 @@ public class Session {
     public List<Interaction> getInteractions() { return Collections.unmodifiableList(interactions); }
     public String getPlayerName() { return playerName; }
     public String getIp() { return ip; }
+    public boolean isProtected() { return isProtected; }
     
     public static class Interaction {
         private final String eventType;
