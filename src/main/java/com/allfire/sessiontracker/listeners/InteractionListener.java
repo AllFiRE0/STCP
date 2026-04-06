@@ -36,7 +36,7 @@ public class InteractionListener implements Listener {
     }
     
     private void handleInteraction(Player player, String eventType, Location location) {
-        // Право 1: stcp.bypass - игрок НЕ получает предупреждения (по умолчанию false)
+        // Право обхода - игрок не получает предупреждения
         if (player.hasPermission(plugin.getConfigManager().getBypassPermission())) {
             return;
         }
@@ -50,7 +50,7 @@ public class InteractionListener implements Listener {
         for (Session other : plugin.getSessionManager().getSessions()) {
             if (other.getPlayerName().equals(player.getName())) continue;
             
-            // Право 2: stcp.protected - вещи этого игрока НЕ мониторятся (по умолчанию false)
+            // Право защиты - вещи этого игрока не мониторятся
             if (other.isProtected()) {
                 continue;
             }
@@ -59,7 +59,6 @@ public class InteractionListener implements Listener {
                 if (System.currentTimeMillis() - interaction.getTimestamp() > timeWindow) continue;
                 if (location.distance(interaction.getLocation()) <= radius) {
                     
-                    // Добавляем нарушение и предупреждение
                     plugin.getViolationManager().addViolation(
                         player.getUniqueId(),
                         player.getName(),
@@ -70,8 +69,10 @@ public class InteractionListener implements Listener {
                         player.getAddress().getAddress().getHostAddress()
                     );
                     
-                    // Выдаём предупреждение нарушителю
-                    plugin.getWarnManager().addWarn(player, 1, other.getPlayerName());
+                    // Выдаём предупреждение, если включено
+                    if (plugin.getConfigManager().isWarnEnabled()) {
+                        plugin.getWarnManager().addWarn(player, 1, other.getPlayerName());
+                    }
                     return;
                 }
             }
