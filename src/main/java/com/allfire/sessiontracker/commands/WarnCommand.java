@@ -6,6 +6,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -41,7 +42,6 @@ public class WarnCommand {
             return true;
         }
         
-        // Определяем цель
         Player targetPlayer = null;
         OfflinePlayer targetOffline = null;
         String targetName = null;
@@ -63,18 +63,20 @@ public class WarnCommand {
         }
         
         if (action.equals("add")) {
-            // ADD требует онлайн игрока
             if (targetPlayer == null) {
                 sender.sendMessage("§cИгрок должен быть онлайн для добавления предупреждений!");
                 return true;
             }
             plugin.getWarnManager().addWarn(targetPlayer, amount);
             int total = plugin.getWarnManager().getWarnCount(targetPlayer.getUniqueId());
-            sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.added",
-                Map.of("amount", String.valueOf(amount), "player", targetName, "total", String.valueOf(total))));
+            
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("amount", String.valueOf(amount));
+            placeholders.put("player", targetName);
+            placeholders.put("total", String.valueOf(total));
+            sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.added", placeholders));
             
         } else if (action.equals("remove")) {
-            // REMOVE работает с оффлайн игроками
             UUID targetUuid;
             if (targetPlayer != null) {
                 targetUuid = targetPlayer.getUniqueId();
@@ -89,14 +91,19 @@ public class WarnCommand {
             
             int current = plugin.getWarnManager().getWarnCount(targetUuid);
             if (current < amount) {
-                sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.not_enough",
-                    Map.of("amount", String.valueOf(amount))));
+                Map<String, String> placeholders = new HashMap<>();
+                placeholders.put("amount", String.valueOf(amount));
+                sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.not_enough", placeholders));
                 return true;
             }
             plugin.getWarnManager().removeWarn(targetUuid, amount);
             int total = plugin.getWarnManager().getWarnCount(targetUuid);
-            sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.removed",
-                Map.of("amount", String.valueOf(amount), "player", targetName, "total", String.valueOf(total))));
+            
+            Map<String, String> placeholders = new HashMap<>();
+            placeholders.put("amount", String.valueOf(amount));
+            placeholders.put("player", targetName);
+            placeholders.put("total", String.valueOf(total));
+            sender.sendMessage(plugin.getLanguageManager().getMessage("commands.warn.removed", placeholders));
         } else {
             sender.sendMessage("§cИспользуйте add или remove");
         }
